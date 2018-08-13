@@ -59,10 +59,11 @@ KNOWN_ARTICLE_CONTENT_PATTERNS = [
 
 class PublishDatePattern(object):
 
-    def __init__(self, attr, value, content, domain=None):
+    def __init__(self, attr, value, content=None, tag=None, domain=None):
         self.attr = attr
         self.value = value
         self.content = content
+        self.tag = tag
         self.domain = domain
 
     def __repr__(self):

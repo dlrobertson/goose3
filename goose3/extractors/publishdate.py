@@ -34,7 +34,11 @@ class PublishDateExtractor(BaseExtractor):
                 continue
             meta_tags = self.parser.getElementsByTag(self.article.doc,
                                                      attr=known_meta_tag.attr,
-                                                     value=known_meta_tag.value)
+                                                     value=known_meta_tag.value,
+                                                     tag=known_meta_tag.tag)
             if meta_tags:
-                return self.parser.getAttribute(meta_tags[0], known_meta_tag.content)
+                if known_meta_tag.tag is None:
+                    return self.parser.getAttribute(meta_tags[0], known_meta_tag.content)
+                else:
+                    return meta_tags[0].text_content()
         return None
