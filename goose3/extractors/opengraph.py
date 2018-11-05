@@ -21,6 +21,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from rdflib import Graph, plugin
+
 from goose3.extractors import BaseExtractor
 
 
@@ -30,32 +32,8 @@ class OpenGraphExtractor(BaseExtractor):
         opengraph_dict = {}
         node = self.article.doc
         metas = self.parser.getElementsByTag(node, 'meta')
+        g = Graph()
 
-        # Open Graph type that is supported. In theory it is possible
-        # that a page has multiple types
-        og_types = [
-            self.parser.getAttribute(meta, 'content')
-            for meta in metas
-            if (self.parser.getAttribute(meta, 'property') == "og:type" and
-                self.parser.getAttribute(meta, 'content'))
-        ]
+        g.parse(data=self.article.raw_html, format='html')
 
-        if og_types:
-            # make unique set of possible prefixes
-            og_types = tuple([x for x in set(og_types)])
-
-        for meta in metas:
-            attr = self.parser.getAttribute(meta, 'property')
-            value = self.parser.getAttribute(meta, 'content')
-            if attr and value:
-                if attr.startswith("og:"):
-                    opengraph_dict.update({attr.split(":", 1)[1]: value})
-                elif og_types and attr.startswith(og_types):
-                    opengraph_dict.update({attr: value})
-
-        # add all the types in... if there are multiple
-        if len(og_types) > 1:
-            opengraph_dict.pop('type')
-            opengraph_dict['types'] = [x for x in sorted(og_types)]
-
-        return opengraph_dict
+        return g

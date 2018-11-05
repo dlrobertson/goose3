@@ -24,7 +24,9 @@ import re
 import os
 
 from urllib.parse import urlparse, urljoin
+from rdflib import URIRef
 
+from goose3.constants import SCHEMA_ORG_NS
 from goose3.extractors import BaseExtractor
 from goose3.image import Image
 from goose3.utils import FileHelper
@@ -321,13 +323,16 @@ class ImageExtractor(BaseExtractor):
          - Open Graph
          - schema.org
         """
-        if 'image' in self.article.opengraph:
-            return self.get_image(self.article.opengraph["image"],
+        ogp_image_ref = URIRef("http://ogp.me/ns#image")
+        if (None, ogp_image_ref, None) in self.article.opengraph:
+            return self.get_image(str(self.article.opengraph.value(subject=URIRef(""),
+                                                                   predicate=ogp_image_ref)),
                                   extraction_type='opengraph')
-        elif (self.article.schema and 'image' in self.article.schema and
-              "url" in self.article.schema["image"]):
-            return self.get_image(self.article.schema["image"]["url"],
-                                  extraction_type='schema.org')
+        if self.article.schema:
+            for (_, _, o) in self.article.schema.triples((None, SCHEMA_ORG_NS.image, None)):
+                for image_url in self.article.schema.objects(o, SCHEMA_ORG_NS.url):
+                    if image_url:
+                        return self.get_image(str(image_url), extraction_type='schema.org')
         return None
 
     def get_local_image(self, src):

@@ -30,16 +30,12 @@ class TestOpenGraph(TestExtractionBase):
 
     def test_opengraph(self):
         article = self.getArticle()
-        self.runArticleAssertions(article=article, fields=['opengraph', 'domain', 'final_url'])
+        self.runArticleAssertions(article=article, fields=['title', 'domain', 'final_url'])
 
     def test_opengraph_type(self):
         article = self.getArticle()
-        self.runArticleAssertions(article=article, fields=['opengraph', 'publish_date'])
-
-    def test_opengraph_type_none(self):
-        article = self.getArticle()
-        self.runArticleAssertions(article=article, fields=['opengraph'])
+        self.runArticleAssertions(article=article, fields=['publish_date'])
 
     def test_opengraph_types_mult(self):
         article = self.getArticle()
-        self.runArticleAssertions(article=article, fields=['opengraph'])
+        self.runArticleAssertions(article=article, fields=['publish_date', 'title'])

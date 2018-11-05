@@ -23,17 +23,23 @@ limitations under the License.
 
 import json
 
-from goose3.extractors import BaseExtractor
+from rdflib import URIRef
 
+from goose3.constants import SCHEMA_ORG_NS
+from goose3.extractors import BaseExtractor
 
 class PublishDateExtractor(BaseExtractor):
     def extract(self):
         # check the opengraph and ReportageNewsArticle dictionary for the
         # publication date first.
-        if "article:published_time" in self.article.opengraph:
-            return self.article.opengraph["article:published_time"]
-        if self.article.schema and "datePublished" in self.article.schema:
-            return self.article.schema["datePublished"]
+        ogp_publish_time = URIRef("http://ogp.me/ns#article:published_time")
+        if (None, ogp_publish_time, None) in self.article.opengraph:
+            return str(self.article.opengraph.value(subject=URIRef(""), predicate=ogp_publish_time))
+        if self.article.schema:
+            for (s, p, _) in self.article.schema.triples((None, SCHEMA_ORG_NS.datePublished, None)):
+                v = self.article.schema.value(subject=s, predicate=p)
+                if v:
+                    return str(v)
         for known_meta_tag in self.config.known_publish_date_tags:
             # if this is a domain specific config and the current
             # article domain does not match the configured domain,

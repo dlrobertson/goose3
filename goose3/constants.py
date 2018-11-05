@@ -21,25 +21,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from rdflib import Graph, plugin
+from rdflib import Namespace
 
-from goose3.extractors import BaseExtractor
-
-
-class SchemaExtractor(BaseExtractor):
-
-    def extract(self):
-        node = self.article.doc
-        metas = self.parser.getElementsByTag(node, 'script', attr='type',
-                                             value='application/ld\+json')
-        found_graph = False
-        g = Graph()
-        for meta in metas:
-            try:
-                g.parse(data=meta.text_content().strip(), format='json-ld')
-                found_graph = True
-            except (ValueError, KeyError):
-                # If the contents are not proper JSON or a key we expect
-                # to exist does not, continue to the next tag.
-                continue
-        return g if found_graph else None
+SCHEMA_ORG_NS = Namespace("http://schema.org/")

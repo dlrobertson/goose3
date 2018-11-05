@@ -22,6 +22,9 @@ limitations under the License.
 """
 import re
 
+from rdflib import URIRef
+
+from goose3.constants import SCHEMA_ORG_NS
 from goose3.extractors import BaseExtractor
 
 
@@ -36,15 +39,16 @@ class TitleExtractor(BaseExtractor):
         and use TITLE_SPLITTERS to reformat title
         """
         # check if we have the site name in opengraph data
-        if "site_name" in list(self.article.opengraph.keys()):
-            site_name = self.article.opengraph['site_name']
+        ogp_site_name = URIRef("http://ogp.me/ns#site_name")
+        if (None, ogp_site_name, None) in self.article.opengraph:
+            site_name = self.article.opengraph.value(subject=URIRef(""), predicate=ogp_site_name)
             # remove the site name from title
-            title = title.replace(site_name, '').strip()
-        elif (self.article.schema and "publisher" in self.article.schema and
-              "name" in self.article.schema["publisher"]):
-            site_name = self.article.schema["publisher"]["name"]
-            # remove the site name from title
-            title = title.replace(site_name, '').strip()
+            title = title.replace(str(site_name), '').strip()
+        elif self.article.schema:
+            for (_, _, o) in self.article.schema.triples((None, SCHEMA_ORG_NS.publisher, None)):
+                for name in self.article.schema.objects(o, SCHEMA_ORG_NS.name):
+                    title = title.replace(str(name), '').strip()
+                    break
 
         # try to remove the domain from url
         if self.article.domain:
@@ -82,11 +86,16 @@ class TitleExtractor(BaseExtractor):
         """
         title = ''
 
+        ogp_title = URIRef("http://ogp.me/ns#title")
         # rely on opengraph in case we have the data
-        if "title" in list(self.article.opengraph.keys()):
-            return self.clean_title(self.article.opengraph['title'])
-        elif self.article.schema and "headline" in self.article.schema:
-            return self.clean_title(self.article.schema['headline'])
+        if (None, ogp_title, None) in self.article.opengraph:
+            return self.clean_title(str(self.article.opengraph.value(subject=URIRef(""),
+                                                                     predicate=ogp_title)))
+        if self.article.schema:
+            for (s, p, _) in self.article.schema.triples((None, SCHEMA_ORG_NS.headline, None)):
+                v = self.article.schema.value(subject=s, predicate=p)
+                if v:
+                    return self.clean_title(str(v))
 
         # try to fetch the meta headline
         meta_headline = self.parser.getElementsByTag(self.article.doc,

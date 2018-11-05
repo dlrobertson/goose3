@@ -30,5 +30,5 @@ class TestReportageNewsArticle(TestExtractionBase):
 
     def test_reportagenewsarticle(self):
         article = self.getArticle()
-        fields = ["schema", "publish_date", "domain", "final_url", "title"]
+        fields = ["publish_date", "domain", "final_url", "title"]
         self.runArticleAssertions(article=article, fields=fields)

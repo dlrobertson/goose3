@@ -26,6 +26,7 @@ from copy import deepcopy
 
 import dateutil.parser
 from dateutil.tz import tzutc
+from rdflib import URIRef
 
 from goose3.article import Article
 from goose3.utils import URLHelper, RawHelper
@@ -43,6 +44,7 @@ from goose3.extractors.publishdate import PublishDateExtractor
 from goose3.extractors.schema import SchemaExtractor
 from goose3.extractors.metas import MetasExtractor
 from goose3.cleaners import StandardDocumentCleaner
+from goose3.constants import SCHEMA_ORG_NS
 from goose3.outputformatters import StandardOutputFormatter
 
 from goose3.network import NetworkFetcher
@@ -153,10 +155,16 @@ class Crawler(object):
         self.article._schema = self.schema_extractor.extract()
 
         if not self.article._final_url:
-            if "url" in self.article.opengraph:
-                self.article._final_url = self.article.opengraph["url"]
-            elif self.article.schema and "url" in self.article.schema:
-                self.article._final_url = self.article.schema["url"]
+            ogp_title_url = URIRef("http://ogp.me/ns#url")
+            if (None, ogp_title_url, None) in self.article.opengraph:
+                self.article._final_url = str(self.article.opengraph.value(subject=URIRef(""), predicate=ogp_title_url))
+            elif self.article.schema:
+                for (s, p, _) in self.article.schema.triples((None, SCHEMA_ORG_NS.mainEntityOfPage, None)):
+                    v = self.article.schema.value(subject=s, predicate=p)
+                    if v:
+                        self.article._final_url = str(v)
+                        break
+
 
         # meta
         metas = self.metas_extractor.extract()
